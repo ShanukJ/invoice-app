@@ -43,7 +43,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <Textarea
               value={issuerInfo.address}
               onChange={(e) => onIssuerInfoChange({ ...issuerInfo, address: e.target.value })}
-              placeholder="16 Eaton Road, Bowdon, Altrincham, England, WA14 3EH"
+              placeholder=""
               rows={3}
             />
           </FormField>
