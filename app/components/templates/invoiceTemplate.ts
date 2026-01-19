@@ -9,6 +9,17 @@ export interface InvoiceTemplateParams {
   invoiceData: InvoiceData;
 }
 
+const loadRobotoFont = (): Promise<void> => {
+  return new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    link.onload = () => resolve();
+    link.onerror = () => resolve(); // Continue even if font fails to load
+    document.head.appendChild(link);
+  });
+};
+
 const generateInvoiceElement = ({
   invoiceNumber,
   company,
@@ -23,7 +34,7 @@ const generateInvoiceElement = ({
 
   const container = document.createElement("div");
   container.style.cssText = `
-    font-family: Georgia, serif;
+    font-family: 'Roboto', sans-serif;
     padding: 60px;
     font-size: 14px;
     line-height: 1.6;
@@ -71,9 +82,24 @@ const generateInvoiceElement = ({
   return container;
 };
 
+const generatePDFFilename = (issuerName: string, invoiceNumber: string, endDate: string): string => {
+  // Clean up name but keep spaces
+  const formattedName = issuerName.trim().replace(/\s+/g, ' ').replace(/[^a-zA-Z\s]/g, '');
+
+  // Parse the end date to get month and year
+  const date = new Date(endDate);
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getFullYear();
+
+  return `${formattedName}_${invoiceNumber}_${month}_${year}.pdf`;
+};
+
 export const downloadInvoicePDF = async (
   params: InvoiceTemplateParams,
 ): Promise<void> => {
+  // Load Roboto font
+  await loadRobotoFont();
+
   const element = generateInvoiceElement(params);
 
   // Position element on screen but hidden behind everything
@@ -85,7 +111,7 @@ export const downloadInvoicePDF = async (
   document.body.appendChild(element);
 
   // Wait for fonts and styles to load
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 200));
 
   try {
     const html2canvas = (await import("html2canvas")).default;
@@ -109,7 +135,13 @@ export const downloadInvoicePDF = async (
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
     pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Invoice_${params.invoiceNumber}.pdf`);
+
+    const filename = generatePDFFilename(
+      params.issuerInfo.name,
+      params.invoiceNumber,
+      params.invoiceData.endDate
+    );
+    pdf.save(filename);
   } finally {
     document.body.removeChild(element);
   }
