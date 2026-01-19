@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Invoice Generator
+
+A professional invoice generator built with Next.js, React, and Tailwind CSS. Create, manage, and download invoices as PDFs directly from your browser.
+
+## Features
+
+- Generate professional PDF invoices
+- Manage multiple companies
+- Auto-fill service period with current month dates
+- Track invoice history
+- Store bank details and issuer information
+- All data stored locally in browser (localStorage)
+- Mobile-responsive design
+
+## Tech Stack
+
+- **Framework**: Next.js 16
+- **UI**: React with TypeScript
+- **Styling**: Tailwind CSS
+- **PDF Generation**: jsPDF + html2canvas
+- **Icons**: Lucide React
+
+## Project Structure
+
+The project follows Atomic Design principles:
+
+```
+app/
+├── components/
+│   ├── atoms/           # Basic UI elements (Button, Input, Card, etc.)
+│   ├── molecules/       # Combinations of atoms (FormField, TabButton, EmptyState)
+│   ├── organisms/       # Complex UI sections (Tabs, Cards with logic)
+│   └── templates/       # Page-level layouts (InvoiceGenerator)
+├── hooks/               # Custom React hooks
+├── types/               # TypeScript type definitions
+└── utils/               # Utility functions (formatting, validation)
+```
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Settings Tab**: Add your name, address, and bank details
+2. **Companies Tab**: Add companies you invoice
+3. **Generate Tab**: Select a company, fill in invoice details, and generate PDF
+4. **History Tab**: View all previously generated invoices
 
-## Learn More
+## Build
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
