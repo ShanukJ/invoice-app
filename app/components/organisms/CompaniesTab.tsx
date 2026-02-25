@@ -74,12 +74,16 @@ export const CompaniesTab: React.FC<CompaniesTabProps> = ({
               onChange={(e) => onSetNewCompany({ ...newCompany, address: e.target.value })}
               rows={3}
             />
-            <Input
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>Starting Invoice Count (default: 0)</label>
+              <Input
               type="number"
               placeholder="Starting Invoice Count (default: 0)"
               value={newCompany.invoiceCount}
               onChange={(e) => onSetNewCompany({ ...newCompany, invoiceCount: parseInt(e.target.value) || 0 })}
             />
+            </div>
+            
 
             {/* Purposes Management */}
             <div>
