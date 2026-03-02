@@ -1,6 +1,6 @@
 # Invoice Generator
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/a2aac459-23ab-414d-bb33-91c7303be68c/deploy-status)](https://app.netlify.com/projects/genenvoice/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a2aac459-23ab-414d-bb33-91c7303be68c/deploy-status)](https://geninvoice.shanukj.me)
 
 A professional invoice generator built with Next.js, React, and Tailwind CSS. Create, manage, and download invoices as PDFs directly from your browser.
 
