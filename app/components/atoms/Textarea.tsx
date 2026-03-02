@@ -1,10 +1,10 @@
-import React from 'react';
+import type { TextareaHTMLAttributes } from 'react';
 import { inputClasses } from './Input';
 
 const textareaClasses = `${inputClasses} font-[inherit]`;
 
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export const Textarea: React.FC<TextareaProps> = ({ className = '', ...props }) => {
+export function Textarea({ className = '', ...props }: TextareaProps) {
   return <textarea className={`${textareaClasses} ${className}`} {...props} />;
-};
+}
