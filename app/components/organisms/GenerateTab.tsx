@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { Company, InvoiceData } from '../../types/types';
 import { Input, Select, Toggle } from '../atoms';
 import { FormField } from '../molecules';
@@ -9,7 +9,7 @@ interface GenerateTabProps {
   companies: Company[];
   invoiceData: InvoiceData;
   onInvoiceDataChange: (data: InvoiceData) => void;
-  onGeneratePDF: () => void;
+  onGeneratePDF: () => void | Promise<void>;
   generateInvoiceNumber: (company: Company) => string;
 }
 
@@ -23,6 +23,7 @@ export const GenerateTab: React.FC<GenerateTabProps> = ({
   const selectedCompany = companies.find(c => c.id === invoiceData.companyId);
   const [autoServicePeriod, setAutoServicePeriod] = useState(false);
   const [autoInvoiceNumber, setAutoInvoiceNumber] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const generatedInvoiceNumber = selectedCompany ? generateInvoiceNumber(selectedCompany) : '';
 
@@ -40,6 +41,16 @@ export const GenerateTab: React.FC<GenerateTabProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoInvoiceNumber, selectedCompany?.id, selectedCompany?.invoiceCount]);
+
+  const handleGeneratePDF = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      await onGeneratePDF();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div>
@@ -152,11 +163,12 @@ export const GenerateTab: React.FC<GenerateTabProps> = ({
         </div>
 
         <button
-          onClick={onGeneratePDF}
-          className="mt-5 p-4 bg-linear-to-r from-indigo-500 to-purple-600 text-white border-none rounded-lg text-lg font-semibold cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+          onClick={handleGeneratePDF}
+          disabled={isGenerating}
+          className="mt-5 p-4 bg-linear-to-r from-indigo-500 to-purple-600 text-white border-none rounded-lg text-lg font-semibold cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
         >
-          <Download size={20} />
-          Generate Invoice
+          {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+          {isGenerating ? 'Generating…' : 'Generate Invoice'}
         </button>
       </div>
     </div>
