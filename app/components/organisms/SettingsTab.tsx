@@ -1,5 +1,5 @@
-import React from 'react';
-import { Save } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Save, Download, Upload, FileJson, FileSpreadsheet } from 'lucide-react';
 import { BankDetails, IssuerInfo } from '../../types/types';
 import { Input, Textarea, Button } from '../atoms';
 import { FormField } from '../molecules';
@@ -11,6 +11,10 @@ interface SettingsTabProps {
   onBankDetailsChange: (details: BankDetails) => void;
   onSaveIssuerInfo: () => void;
   onSaveBankDetails: () => void;
+  invoiceHistoryCount: number;
+  onExportHistoryCSV: () => void;
+  onExportHistoryJSON: () => void;
+  onImportHistory: (file: File) => void | Promise<void>;
 }
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({
@@ -20,7 +24,28 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   onBankDetailsChange,
   onSaveIssuerInfo,
   onSaveBankDetails,
+  invoiceHistoryCount,
+  onExportHistoryCSV,
+  onExportHistoryJSON,
+  onImportHistory,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onImportHistory(file);
+    }
+    // Reset so selecting the same file again still triggers onChange.
+    e.target.value = '';
+  };
+
+  const hasHistory = invoiceHistoryCount > 0;
+
   return (
     <div>
       <h2 className="mt-0 text-2xl md:text-3xl text-gray-900 mb-8">
@@ -55,7 +80,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </div>
 
       {/* Bank Details */}
-      <div>
+      <div className="mb-10">
         <h3 className="text-xl mb-5 text-gray-700">Bank Details</h3>
         <div className="grid gap-4">
           <FormField label="Account Number">
@@ -98,6 +123,60 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             Save Bank Details
           </Button>
         </div>
+      </div>
+
+      {/* Data Management */}
+      <div>
+        <h3 className="text-xl mb-2 text-gray-700">Invoice History Data</h3>
+        <p className="text-sm text-gray-500 mb-5">
+          Export invoice history as CSV or JSON, or import a previously exported file.
+          Companies and settings are not affected.
+        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <Button
+            variant="primary"
+            onClick={onExportHistoryCSV}
+            disabled={!hasHistory}
+            className={!hasHistory ? 'opacity-60 cursor-not-allowed' : ''}
+            aria-label="Export invoice history as CSV"
+          >
+            <FileSpreadsheet size={18} />
+            Export CSV
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onExportHistoryJSON}
+            disabled={!hasHistory}
+            className={!hasHistory ? 'opacity-60 cursor-not-allowed' : ''}
+            aria-label="Export invoice history as JSON"
+          >
+            <FileJson size={18} />
+            Export JSON
+          </Button>
+          <Button
+            variant="gray"
+            onClick={handleImportClick}
+            aria-label="Import invoice history from CSV or JSON"
+          >
+            <Upload size={18} />
+            Import File
+          </Button>
+        </div>
+        <div className="text-xs text-gray-500 mt-3 flex items-center gap-2">
+          <Download size={14} />
+          <span>
+            {hasHistory
+              ? `${invoiceHistoryCount} invoice${invoiceHistoryCount === 1 ? '' : 's'} available to export.`
+              : 'No invoices to export yet.'}
+          </span>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,.json,text/csv,application/json"
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </div>
     </div>
   );

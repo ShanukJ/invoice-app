@@ -15,6 +15,17 @@ import { GenerateTab, CompaniesTab, HistoryTab, SettingsTab } from '../organisms
 import { downloadInvoicePDF } from './invoiceTemplate';
 import { generateInvoiceNumber } from '../../utils/invoiceNumber';
 import { validateCompany, validateInvoiceGeneration } from '../../utils/validation';
+import {
+  serializeHistoryToCSV,
+  serializeHistoryToJSON,
+  parseHistoryFromCSV,
+  parseHistoryFromJSON,
+  detectFormat,
+  mergeHistory,
+  downloadBlob,
+  historyExportFilename,
+} from '../../utils/invoiceExport';
+import type { ImportMode } from '../../utils/invoiceExport';
 import { useToast } from '../../contexts/ToastContext';
 
 const STORAGE_KEYS = {
@@ -135,6 +146,95 @@ export const InvoiceGenerator: React.FC = () => {
   const saveIssuerInfoHandler = () => {
     saveToStorage(STORAGE_KEYS.issuerInfo, issuerInfo);
     toast.success('Issuer information saved successfully!');
+  };
+
+  const exportHistoryCSV = () => {
+    if (invoiceHistory.length === 0) {
+      toast.error('No invoice history to export.');
+      return;
+    }
+    const csv = serializeHistoryToCSV(invoiceHistory);
+    downloadBlob(csv, historyExportFilename('csv'), 'text/csv');
+    toast.success(`Exported ${invoiceHistory.length} invoice${invoiceHistory.length === 1 ? '' : 's'} as CSV.`);
+  };
+
+  const exportHistoryJSON = () => {
+    if (invoiceHistory.length === 0) {
+      toast.error('No invoice history to export.');
+      return;
+    }
+    const json = serializeHistoryToJSON(invoiceHistory);
+    downloadBlob(json, historyExportFilename('json'), 'application/json');
+    toast.success(`Exported ${invoiceHistory.length} invoice${invoiceHistory.length === 1 ? '' : 's'} as JSON.`);
+  };
+
+  const importHistory = async (file: File) => {
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      toast.error('Could not read the selected file.');
+      return;
+    }
+
+    if (!text.trim()) {
+      toast.error('Selected file is empty.');
+      return;
+    }
+
+    const format = detectFormat(file.name, text);
+    let items: InvoiceHistoryItem[] = [];
+    let parseSkipped = 0;
+    try {
+      const result = format === 'json' ? parseHistoryFromJSON(text) : parseHistoryFromCSV(text);
+      items = result.items;
+      parseSkipped = result.skipped;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not parse the selected file.';
+      toast.error(`Import failed: ${message}`);
+      return;
+    }
+
+    if (items.length === 0) {
+      toast.error('No valid invoice history entries were found in the file.');
+      return;
+    }
+
+    let mode: ImportMode = 'merge';
+    if (invoiceHistory.length > 0) {
+      const replace = window.confirm(
+        `Import ${items.length} invoice${items.length === 1 ? '' : 's'}?\n\n` +
+          `OK = Replace the existing ${invoiceHistory.length} invoice${invoiceHistory.length === 1 ? '' : 's'}.\n` +
+          `Cancel = Keep the current list and merge new entries into it.`
+      );
+      mode = replace ? 'replace' : 'merge';
+    }
+
+    try {
+      let nextHistory: InvoiceHistoryItem[];
+      let added = items.length;
+      if (mode === 'replace') {
+        nextHistory = [...items];
+      } else {
+        const result = mergeHistory(invoiceHistory, items);
+        nextHistory = result.merged;
+        added = result.added;
+      }
+
+      setInvoiceHistory(nextHistory);
+      saveToStorage(STORAGE_KEYS.history, nextHistory);
+      const skippedDupes = mode === 'merge' ? items.length - added : 0;
+      const totalSkipped = parseSkipped + skippedDupes;
+      const detail = totalSkipped > 0 ? `, skipped ${totalSkipped}` : '';
+      toast.success(
+        mode === 'replace'
+          ? `Imported ${items.length} invoice${items.length === 1 ? '' : 's'}, replacing existing history${detail}.`
+          : `Imported ${added} new invoice${added === 1 ? '' : 's'}${detail}.`
+      );
+    } catch (err) {
+      console.error('Error saving imported history:', err);
+      toast.error('Could not save imported history (storage may be full).');
+    }
   };
 
   const generatePDF = async () => {
@@ -268,6 +368,10 @@ export const InvoiceGenerator: React.FC = () => {
               onBankDetailsChange={setBankDetails}
               onSaveIssuerInfo={saveIssuerInfoHandler}
               onSaveBankDetails={saveBankDetailsHandler}
+              invoiceHistoryCount={invoiceHistory.length}
+              onExportHistoryCSV={exportHistoryCSV}
+              onExportHistoryJSON={exportHistoryJSON}
+              onImportHistory={importHistory}
             />
           )}
         </div>
