@@ -78,12 +78,19 @@ export const getCurrentMonthDates = (): { startDate: string; endDate: string } =
 };
 
 /**
- * Get today's date formatted for invoices (e.g., "01/15/2026")
+ * Format date for the invoice issue date (e.g., "01/15/2026")
  */
-export const getTodayFormatted = (): string => {
-  return new Date().toLocaleDateString('en-US', {
+export const formatIssueDate = (dateString: string): string => {
+  return formatDate(dateString, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
+};
+
+/**
+ * Get today's date formatted for invoices (e.g., "01/15/2026")
+ */
+export const getTodayFormatted = (): string => {
+  return formatIssueDate(new Date().toISOString());
 };

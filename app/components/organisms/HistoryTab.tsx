@@ -10,6 +10,8 @@ interface HistoryTabProps {
   invoiceHistory: InvoiceHistoryItem[];
   selectedHistoryCompany: string;
   onSelectedHistoryCompanyChange: (companyId: string) => void;
+  onDeleteInvoice: (id: string) => void;
+  onExportInvoice: (invoice: InvoiceHistoryItem) => Promise<void>;
 }
 
 export const HistoryTab: React.FC<HistoryTabProps> = ({
@@ -17,6 +19,8 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
   invoiceHistory,
   selectedHistoryCompany,
   onSelectedHistoryCompanyChange,
+  onDeleteInvoice,
+  onExportInvoice,
 }) => {
   const filteredHistory = invoiceHistory.filter(
     invoice => !selectedHistoryCompany || invoice.companyId === selectedHistoryCompany
@@ -54,7 +58,12 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
           />
         ) : (
           filteredHistory.map(invoice => (
-            <InvoiceHistoryCard key={invoice.id} invoice={invoice} />
+            <InvoiceHistoryCard
+              key={invoice.id}
+              invoice={invoice}
+              onDelete={() => onDeleteInvoice(invoice.id)}
+              onExport={() => onExportInvoice(invoice)}
+            />
           ))
         )}
       </div>
