@@ -14,7 +14,7 @@ import { TabButton } from '../molecules';
 import { GenerateTab, CompaniesTab, HistoryTab, SettingsTab } from '../organisms';
 import { downloadInvoicePDF } from './invoiceTemplate';
 import { generateInvoiceNumber } from '../../utils/invoiceNumber';
-import { validateCompany, validateInvoiceGeneration } from '../../utils/validation';
+import { validateCompany, validateInvoiceGeneration, validateIssuerInfo } from '../../utils/validation';
 import { useToast } from '../../contexts/ToastContext';
 
 const STORAGE_KEYS = {
@@ -195,6 +195,9 @@ export const InvoiceGenerator: React.FC = () => {
         startDate: invoiceData.startDate,
         endDate: invoiceData.endDate,
         generatedAt: new Date().toISOString(),
+        companyAddress: selectedCompany.address,
+        issuerInfo,
+        bankDetails,
       };
       const updatedHistory = [historyItem, ...invoiceHistory];
       setInvoiceHistory(updatedHistory);
@@ -204,6 +207,54 @@ export const InvoiceGenerator: React.FC = () => {
     } catch (error) {
       console.error('Error generating invoice:', error);
       toast.error('Error generating invoice. Please try again.');
+    }
+  };
+
+  const deleteHistoryItem = (id: string) => {
+    if (confirm('Are you sure you want to delete this invoice from history?')) {
+      const updatedHistory = invoiceHistory.filter(item => item.id !== id);
+      setInvoiceHistory(updatedHistory);
+      saveToStorage(STORAGE_KEYS.history, updatedHistory);
+      toast.success('Invoice deleted from history');
+    }
+  };
+
+  const exportHistoryPDF = async (invoice: InvoiceHistoryItem) => {
+    // Older entries have no snapshot, so fall back to the current company and settings
+    const companyAddress =
+      invoice.companyAddress ?? companies.find(c => c.id === invoice.companyId)?.address;
+    if (companyAddress === undefined) {
+      toast.error('The company for this invoice no longer exists');
+      return;
+    }
+
+    const exportIssuerInfo = invoice.issuerInfo ?? issuerInfo;
+    const issuerValidation = validateIssuerInfo(exportIssuerInfo);
+    if (!issuerValidation.isValid) {
+      toast.error(issuerValidation.error || 'Invalid issuer information');
+      return;
+    }
+
+    try {
+      await downloadInvoicePDF({
+        invoiceNumber: invoice.invoiceNumber,
+        company: { name: invoice.companyName, address: companyAddress },
+        issuerInfo: exportIssuerInfo,
+        bankDetails: invoice.bankDetails ?? bankDetails,
+        invoiceData: {
+          companyId: invoice.companyId,
+          purpose: invoice.purpose,
+          amount: invoice.amount,
+          startDate: invoice.startDate,
+          endDate: invoice.endDate,
+          invoiceNumber: invoice.invoiceNumber,
+        },
+        issuedAt: invoice.generatedAt,
+      });
+      toast.success(`Invoice ${invoice.invoiceNumber} exported successfully!`);
+    } catch (error) {
+      console.error('Error exporting invoice:', error);
+      toast.error('Error exporting invoice. Please try again.');
     }
   };
 
@@ -271,6 +322,8 @@ export const InvoiceGenerator: React.FC = () => {
               invoiceHistory={invoiceHistory}
               selectedHistoryCompany={selectedHistoryCompany}
               onSelectedHistoryCompanyChange={setSelectedHistoryCompany}
+              onDeleteInvoice={deleteHistoryItem}
+              onExportInvoice={exportHistoryPDF}
             />
           )}
 

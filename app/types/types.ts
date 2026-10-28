@@ -38,6 +38,10 @@ export interface InvoiceHistoryItem {
   startDate: string;
   endDate: string;
   generatedAt: string;
+  // Snapshots used to re-export the PDF; absent on entries created before export existed
+  companyAddress?: string;
+  issuerInfo?: IssuerInfo;
+  bankDetails?: BankDetails;
 }
 
 export type TabType = 'generate' | 'companies' | 'history' | 'settings';

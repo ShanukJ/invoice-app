@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Download, Loader2, Trash2 } from 'lucide-react';
 import { InvoiceHistoryItem } from '../../types/types';
-import { Card } from '../atoms';
+import { Button, Card } from '../atoms';
 import { formatUSD, formatShortDate, formatDateWithYear, formatFullDateTime } from '../../utils/formatting';
 
 interface InvoiceHistoryCardProps {
   invoice: InvoiceHistoryItem;
+  onDelete: () => void;
+  onExport: () => Promise<void>;
 }
 
-export const InvoiceHistoryCard: React.FC<InvoiceHistoryCardProps> = ({ invoice }) => {
+export const InvoiceHistoryCard: React.FC<InvoiceHistoryCardProps> = ({
+  invoice,
+  onDelete,
+  onExport,
+}) => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      await onExport();
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Card>
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-3">
@@ -19,8 +38,31 @@ export const InvoiceHistoryCard: React.FC<InvoiceHistoryCardProps> = ({ invoice 
             {invoice.companyName}
           </div>
         </div>
-        <div className="text-2xl font-bold text-emerald-500 whitespace-nowrap">
-          ${formatUSD(invoice.amount)}
+        <div className="flex flex-col md:items-end gap-3">
+          <div className="text-2xl font-bold text-emerald-500 whitespace-nowrap">
+            ${formatUSD(invoice.amount)}
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="primary"
+              onClick={handleExport}
+              disabled={isExporting}
+              title="Export PDF"
+              aria-label="Export PDF"
+              className="p-2 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={onDelete}
+              title="Delete"
+              aria-label="Delete"
+              className="p-2 px-3 text-sm"
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
         </div>
       </div>
       <div className="text-gray-500 text-sm mb-2">{invoice.purpose}</div>

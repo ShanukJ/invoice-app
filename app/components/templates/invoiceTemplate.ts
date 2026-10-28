@@ -1,12 +1,14 @@
 import { Company, BankDetails, IssuerInfo, InvoiceData } from "../../types/types";
-import { formatUSD, formatInvoiceDate, getTodayFormatted } from "../../utils/formatting";
+import { formatUSD, formatInvoiceDate, formatIssueDate, getTodayFormatted } from "../../utils/formatting";
 
 export interface InvoiceTemplateParams {
   invoiceNumber: string;
-  company: Company;
+  company: Pick<Company, 'name' | 'address'>;
   issuerInfo: IssuerInfo;
   bankDetails: BankDetails;
   invoiceData: InvoiceData;
+  // ISO timestamp of the original issue; defaults to today
+  issuedAt?: string;
 }
 
 const loadRobotoFont = (): Promise<void> => {
@@ -26,8 +28,9 @@ const generateInvoiceElement = ({
   issuerInfo,
   bankDetails,
   invoiceData,
+  issuedAt,
 }: InvoiceTemplateParams): HTMLDivElement => {
-  const today = getTodayFormatted();
+  const today = issuedAt ? formatIssueDate(issuedAt) : getTodayFormatted();
   const startDateFormatted = formatInvoiceDate(invoiceData.startDate);
   const endDateFormatted = formatInvoiceDate(invoiceData.endDate);
   const formattedAmount = formatUSD(invoiceData.amount);
